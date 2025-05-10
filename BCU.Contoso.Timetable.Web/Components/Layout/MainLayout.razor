@@ -1,0 +1,56 @@
+﻿@inherits LayoutComponentBase
+
+@* Required *@
+<MudThemeProvider Theme="SiteTheme" />
+
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+<style>
+    .mud-table-head {
+        background-color: var(--mud-palette-primary);
+    }
+
+    .mud-table-root .mud-table-head .mud-table-cell {
+        color: var(--mud-palette-primary-text);
+    }
+</style>
+
+@code
+{
+    MudTheme SiteTheme = new MudTheme()
+    {
+        LayoutProperties = new LayoutProperties()
+        {
+            AppbarHeight = "0"
+        },
+        PaletteLight = new PaletteLight
+        {
+            White = Colors.Gray.Lighten5,
+            Primary = Colors.Yellow.Darken3,
+            Secondary = Colors.Green.Darken4,
+            Tertiary = Colors.BlueGray.Darken4,
+            Background = Colors.Gray.Lighten4,
+            BackgroundGray = Colors.Gray.Lighten3,
+            Surface = Colors.Gray.Lighten4,
+            DrawerBackground = Colors.Gray.Lighten4
+        }
+    };
+}

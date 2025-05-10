@@ -1,0 +1,66 @@
+﻿@page "/events"
+@using BCU.Contoso.Timetable.Entities.Api.Requests
+@using BCU.Contoso.Timetable.Entities.Api.Responses
+@using BCU.Contoso.Timetable.Web.Apis
+@rendermode InteractiveServer
+
+@inject ITimetableApi EventApi
+
+<PageTitle>Events</PageTitle>
+
+<MudText Typo="Typo.h3">Events</MudText>
+
+<MudSpacer />
+
+<MudText Typo="Typo.body1">This screen shows all events in the timetable system.</MudText>
+
+<MudSpacer />
+
+<MudDataGrid T="EventSearch" ServerData="ServerReload" Hover="true" @ref="table" SortMode="SortMode.Single" aria-hidden="True">
+    <Columns>
+        <PropertyColumn Property="s => s.Id" Title="Id" Sortable="false"></PropertyColumn>
+        <PropertyColumn Property="s => s.StartDate" Title="Start" Sortable="false"></PropertyColumn>
+        <PropertyColumn Property="s => s.EndDate" Title="End" Sortable="false"></PropertyColumn>
+        <PropertyColumn Property="s => s.Name" Title="Name" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Location" Title="Location" Sortable="true"></PropertyColumn>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudLink Href="@($"/event/{context.Item.Id}")">View</MudLink>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudDataGridPager T="EventSearch" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<EventSearch>? table;
+
+    public async Task<GridData<EventSearch>> ServerReload(GridState<EventSearch> state)
+    {
+        var sortBy = EventSortEnum.None;
+
+        var sortState = state.SortDefinitions.FirstOrDefault();
+
+        if (sortState != null)
+        {
+            switch (sortState.SortBy.ToLower())
+            {
+                case "location":
+                    sortBy = sortState.Descending ? EventSortEnum.LocationAscending : EventSortEnum.LocationDescending;
+                    break;
+                case "name":
+                    sortBy = sortState.Descending ? EventSortEnum.NameDescending : EventSortEnum.NameAscending;
+                    break;
+            }
+        }
+
+        var events = await EventApi.GetEvents(state.Page, sortBy, CancellationToken.None);
+
+        return new GridData<EventSearch> { TotalItems = events.TotalItems, Items = events.Items };
+    }
+}

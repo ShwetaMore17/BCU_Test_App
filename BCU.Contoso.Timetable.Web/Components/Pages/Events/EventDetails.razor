@@ -1,0 +1,59 @@
+﻿@page "/event/{EventId}"
+@using BCU.Contoso.Timetable.Entities.Api.Requests
+@using BCU.Contoso.Timetable.Entities.Api.Responses
+@using BCU.Contoso.Timetable.Web.Apis
+@inject ITimetableApi TimetableApi
+
+<PageTitle>Event: @_event?.Name</PageTitle>
+
+<MudText Typo="Typo.h3">@_event?.Name</MudText>
+
+<MudPaper>
+    <MudText Typo="Typo.body1"><b>Id: </b>@_event?.Id</MudText>
+    <MudText Typo="Typo.body1"><b>Start Date: </b>@_event?.StartDate</MudText>
+    <MudText Typo="Typo.body1"><b>End Date: </b>@_event?.EndDate</MudText>
+
+    @if (EditingLocation)
+    {
+        <MudTextField @bind-Value="EventLocation" Label="Location" Placeholder="Enter location" />
+        <MudButton OnClick="SaveLocation" Color="Color.Primary">Save</MudButton>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1"><b>Location: </b>@_event?.Location <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="Edit Name" OnClick="() => EditingLocation = true" /></MudText>
+    }
+
+    <MudText Typo="Typo.body1"><b>Description: </b>@_event?.Description</MudText>
+</MudPaper>
+
+<MudText Typo="Typo.h4">Course</MudText>
+
+<MudPaper>
+    <MudText Typo="Typo.body1"><b>Start Date: </b>@_event?.Course?.StartDate</MudText>
+    <MudText Typo="Typo.body1"><b>Code: </b>@_event?.Course?.Code</MudText>
+    <MudText Typo="Typo.body1"><b>Description: </b>@_event?.Course?.Description</MudText>
+    <MudText Typo="Typo.body1"><b>View: </b><MudLink Href="@($"/course/{_event?.Course?.Id}")">View</MudLink></MudText>
+</MudPaper>
+
+@code {
+    private bool EditingLocation { get; set; }
+    private string EventLocation { get; set; } = "";
+
+    [Parameter]
+    public required string EventId { get; set; }
+
+    private GetEventResult? _event;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _event = await TimetableApi.GetEvent(int.Parse(EventId), CancellationToken.None);
+        EventLocation = _event?.Location ?? "";
+        await base.OnInitializedAsync();
+    }
+
+    private async Task SaveLocation()
+    {
+        await TimetableApi.UpdateEventLocation(int.Parse(EventId), EventLocation, CancellationToken.None);
+        EditingLocation = false;
+    }
+}

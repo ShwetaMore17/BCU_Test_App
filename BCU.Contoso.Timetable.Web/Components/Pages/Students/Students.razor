@@ -1,0 +1,65 @@
+﻿@page "/students"
+@using BCU.Contoso.Timetable.Entities.Api.Requests
+@using BCU.Contoso.Timetable.Entities.Api.Responses
+@using BCU.Contoso.Timetable.Web.Apis
+@rendermode InteractiveServer
+
+@inject ITimetableApi StudentApi
+
+<PageTitle>Students</PageTitle>
+
+<MudText Typo="Typo.h3">Students</MudText>
+
+<MudSpacer />
+
+<MudText Typo="Typo.body1" aria-label="Temperature in Farenheit">This screen shows all students with timetables.</MudText>
+
+<MudSpacer />
+
+<MudDataGrid T="GetStudentsResult" ServerData="ServerReload" Hover="true" @ref="table" SortMode="SortMode.Single" aria-hidden="True">
+    <Columns>
+        <PropertyColumn Property="s => s.EnrollmentDate" Title="Enrollment Date" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Name" Title="Name" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Email" Title="Email" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Address" Title="Address" Sortable="false"></PropertyColumn>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudLink Href="@($"/student/{context.Item.Id}")" aria-label="Temperature in Celsius">View</MudLink>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudDataGridPager T="GetStudentsResult" PageSizeOptions="[50]" PageSizeSelector="false" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<GetStudentsResult>? table;
+
+    public async Task<GridData<GetStudentsResult>> ServerReload(GridState<GetStudentsResult> state)
+    {
+        var sortBy = StudentSortEnum.None;
+
+        var sortState = state.SortDefinitions.FirstOrDefault();
+
+        if (sortState != null)
+        {
+            switch (sortState.SortBy.ToLower())
+            {
+                case "email":
+                    sortBy = sortState.Descending ? StudentSortEnum.EmailDescending : StudentSortEnum.EmailAscending;
+                    break;
+                case "name":
+                    sortBy = sortState.Descending ? StudentSortEnum.NameDescending : StudentSortEnum.NameAscending;
+                    break;
+            }
+        }
+
+        var students = await StudentApi.GetStudents(0, sortBy, CancellationToken.None);
+
+        return new GridData<GetStudentsResult> { TotalItems = students.TotalItems, Items = students.Items };
+    }
+}

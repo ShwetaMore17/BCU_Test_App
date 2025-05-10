@@ -1,0 +1,89 @@
+﻿@page "/course/{CourseId}"
+@using BCU.Contoso.Timetable.Entities.Api.Requests
+@using BCU.Contoso.Timetable.Entities.Api.Responses
+@using BCU.Contoso.Timetable.Web.Apis
+
+@inject ITimetableApi TimetableApi
+
+<PageTitle>Course: @_course?.Name</PageTitle>
+
+@if (EditingName)
+{
+    <MudTextField @bind-Value="CourseName" Label="Name" Placeholder="Enter name" />
+    <MudButton OnClick="SaveName" Color="Color.Primary">Save</MudButton>
+}
+else
+{
+    <MudText Typo="Typo.h3">@_course?.Name <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="Edit Name" OnClick="() => EditingName = true" /></MudText>
+}
+
+<MudPaper>
+    <MudText Typo="Typo.body1"><b>Start Date: </b>@_course?.StartDate</MudText>
+    <MudText Typo="Typo.body1"><b>Code: </b>@_course?.Code</MudText>
+    <MudText Typo="Typo.body1"><b>Description: </b>@_course?.Description</MudText>
+</MudPaper>
+
+<MudText Typo="Typo.h4">Course Events</MudText>
+
+<MudDataGrid T="GetCourseResultEvent" Loading="_course == null" Hover="true" Items="_course?.Events" SortMode="SortMode.Single" aria-hidden="True">
+    <Columns>
+        <PropertyColumn Property="s => s.Id" Title="Id" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.StartDate" Title="Start" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.EndDate" Title="End" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Name" Title="Name" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Location" Title="Location" Sortable="true"></PropertyColumn>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudLink Href="@($"/event/{context.Item.Id}")">View</MudLink>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudDataGridPager T="GetCourseResultEvent" />
+    </PagerContent>
+</MudDataGrid>
+
+<MudText Typo="Typo.h4">Enrolled Students</MudText>
+
+<MudDataGrid T="GetCourseResultStudent" Loading="_course == null" Hover="true" Items="_course?.EnrolledStudents" SortMode="SortMode.Single" aria-hidden="True">
+    <Columns>
+        <PropertyColumn Property="s => s.EnrollmentDate" Title="Enrollment Date" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Name" Title="Name" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Email" Title="Email" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Address" Title="Address" Sortable="true"></PropertyColumn>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudLink Href="@($"/student/{context.Item.Id}")">View</MudLink>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    private bool EditingName { get; set; }
+    private string CourseName { get; set; } = "";
+
+    [Parameter]
+    public required string CourseId { get; set; }
+
+    private GetCourseResult? _course;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _course = await TimetableApi.GetCourse(int.Parse(CourseId), CancellationToken.None);
+        CourseName = _course?.Name ?? "";
+        await base.OnInitializedAsync();
+    }
+
+    private async Task SaveName()
+    {
+        await TimetableApi.UpdateCourseName(int.Parse(CourseId), CourseName, CancellationToken.None);
+        EditingName = false;
+    }
+}

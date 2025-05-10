@@ -1,0 +1,65 @@
+﻿@page "/student/{StudentId}"
+@using BCU.Contoso.Timetable.Entities.Api.Requests
+@using BCU.Contoso.Timetable.Entities.Api.Responses
+@using BCU.Contoso.Timetable.Web.Apis
+
+@inject ITimetableApi TimetableApi
+
+<PageTitle>Student: @_student?.Name</PageTitle>
+
+@if (EditingName)
+{
+    <MudTextField @bind-Value="StudentName" Label="Name" Placeholder="Enter name" />
+    <MudButton OnClick="SaveName" Color="Color.Primary">Save</MudButton>
+}
+else
+{
+    <MudText Typo="Typo.h3">@_student?.Name <MudIconButton Icon="@Icons.Material.Filled.Edit" aria-label="Edit Name" OnClick="() => EditingName = true" /></MudText>
+}
+
+<MudPaper>
+    <MudText Typo="Typo.body1"><b>Enrolled: </b>@_student?.EnrollmentDate</MudText>
+    <MudText Typo="Typo.body1"><b>Email: </b>@_student?.EnrollmentDate</MudText>
+</MudPaper>
+
+<MudText Typo="Typo.h4">Enrolled Courses</MudText>
+
+<MudDataGrid T="GetStudentResultCourse" Loading="_student == null" Hover="true" Items="_student?.EnrolledCourses" SortMode="SortMode.Single" aria-hidden="True">
+    <Columns>
+        <PropertyColumn Property="s => s.StartDate" Title="Start" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Name" Title="Name" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Code" Title="Code" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="s => s.Description" Title="Description" Sortable="true"></PropertyColumn>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudLink Href="@($"/course/{context.Item.Id}")">View</MudLink>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    private bool EditingName { get; set; }
+    private string StudentName { get; set; } = "";
+
+    [Parameter]
+    public required string StudentId { get; set; }
+
+    private GetStudentResult? _student;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _student = await TimetableApi.GetStudent(int.Parse(StudentId), CancellationToken.None);
+        StudentName = _student?.Name ?? "";
+        await base.OnInitializedAsync();
+    }
+
+    private async Task SaveName()
+    {
+        await TimetableApi.UpdateStudentName(int.Parse(StudentId), StudentName, CancellationToken.None);
+        EditingName = false;
+    }
+}
